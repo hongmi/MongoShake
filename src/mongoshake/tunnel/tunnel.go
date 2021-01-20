@@ -169,6 +169,8 @@ func (factory *WriterFactory) Create(address []string, workerId uint32) Writer {
 		return &FileWriter{Local: address[0]}
 	case utils.VarTunnelDirect:
 		return &DirectWriter{RemoteAddrs: address, ReplayerId: workerId}
+	case utils.VarTunnelDirect2ES:
+		return &ElasticSearchWriter{RemoteAddrs: address, ReplayerId: workerId}
 	default:
 		LOG.Critical("Specific tunnel not found [%s]", factory.Name)
 		return nil
@@ -191,6 +193,9 @@ func (factory *ReaderFactory) Create(address string) Reader {
 		return &FileReader{File: address}
 	case utils.VarTunnelDirect:
 		LOG.Critical("direct mode not supported in reader")
+		return nil
+	case utils.VarTunnelDirect2ES:
+		LOG.Critical("direct2es mode not supported in reader")
 		return nil
 	default:
 		LOG.Critical("Specific tunnel not found [%s]", factory.Name)

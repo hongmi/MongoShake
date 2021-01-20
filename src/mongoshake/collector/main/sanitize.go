@@ -210,8 +210,9 @@ func checkDefaultValue() error {
 		conf.Options.Tunnel != utils.VarTunnelTcp &&
 		conf.Options.Tunnel != utils.VarTunnelFile &&
 		conf.Options.Tunnel != utils.VarTunnelKafka &&
+		conf.Options.Tunnel != utils.VarTunnelDirect2ES &&
 		conf.Options.Tunnel != utils.VarTunnelMock {
-		return fmt.Errorf("incr_sync.tunnel in {direct, rpc, tcp, file, kafka, mock}")
+		return fmt.Errorf("incr_sync.tunnel in {direct, rpc, tcp, file, kafka, direct2es, mock}")
 	}
 	if conf.Options.TunnelMessage == "" {
 		conf.Options.TunnelMessage = utils.VarTunnelMessageRaw
@@ -339,7 +340,7 @@ func checkConflict() error {
 			return fmt.Errorf("DDL is not support for sharding when incr_sync.mongo_fetch_method == 'oplog'")
 		}
 	}
-	if conf.Options.Tunnel == utils.VarTunnelDirect &&
+	if (conf.Options.Tunnel == utils.VarTunnelDirect || conf.Options.Tunnel == utils.VarTunnelDirect) &&
 		conf.Options.IncrSyncWorkerOplogCompressor != utils.VarIncrSyncWorkerOplogCompressorNone {
 		conf.Options.IncrSyncWorkerOplogCompressor = utils.VarIncrSyncWorkerOplogCompressorNone
 	}
@@ -349,8 +350,9 @@ func checkConflict() error {
 	}
 	conf.Options.IncrSyncCollisionEnable = conf.Options.IncrSyncExecutor != 1
 	if conf.Options.Tunnel != utils.VarTunnelDirect &&
+		conf.Options.Tunnel != utils.VarTunnelDirect2ES &&
 		conf.Options.SyncMode != utils.VarSyncModeIncr {
-		return fmt.Errorf("full sync only support when tunnel type == direct")
+		return fmt.Errorf("full sync only support when tunnel type in [direct, direct2es]")
 	}
 	// check source mongodb version >= 4.0 when change stream enable
 	if conf.Options.IncrSyncMongoFetchMethod == utils.VarIncrSyncMongoFetchMethodChangeStream {
@@ -404,6 +406,11 @@ func checkConflict() error {
 		conf.Options.IncrSyncReaderDebug != utils.VarIncrSyncReaderDebugDiscard &&
 		conf.Options.IncrSyncReaderDebug != utils.VarIncrSyncReaderDebugPrint {
 		return fmt.Errorf("incr_sync.reader.debug[%v] invalid", conf.Options.IncrSyncReaderDebug)
+	}
+	if conf.Options.Tunnel == utils.VarTunnelDirect2ES {
+		if conf.Options.IncrSyncMongoFetchMethod != utils.VarIncrSyncMongoFetchMethodChangeStream {
+			return fmt.Errorf("must use changed_stream for mongo_fetch_method, while direct to elasticsearch")
+		}
 	}
 
 	return nil

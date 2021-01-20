@@ -121,7 +121,7 @@ func (coordinator *ReplicationCoordinator) selectSyncMode(syncMode string) (stri
 	if canIncrSync {
 		LOG.Info("sync mode run %v", utils.VarSyncModeIncr)
 		return utils.VarSyncModeIncr, startTsMap, 0, nil
-	} else if syncMode == utils.VarSyncModeIncr || conf.Options.Tunnel != utils.VarTunnelDirect {
+	} else if syncMode == utils.VarSyncModeIncr || (conf.Options.Tunnel != utils.VarTunnelDirect && conf.Options.Tunnel != utils.VarTunnelDirect2ES) {
 		// bugfix v2.4.11: if can not run incr sync directly, return error when sync_mode == "incr"
 		// bugfix v2.4.12: return error when tunnel != "direct"
 		return "", nil, 0, fmt.Errorf("start time illegal, can't run incr sync")

@@ -96,7 +96,7 @@ func startup() {
 	 */
 	repList := make([]tunnel.Replayer, conf.Options.ReplayerNum)
 	for i := range repList {
-		repList[i] = replayer.NewExampleReplayer(i)
+		repList[i] = replayer.NewElasticSearchReplayer(i)
 	}
 
 	LOG.Info("receiver is starting...")

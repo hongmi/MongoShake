@@ -28,3 +28,7 @@ bin/
 conf/
 !conf/collector.conf
 !conf/receiver.conf
+
+src/github.com
+src/golang.org
+output

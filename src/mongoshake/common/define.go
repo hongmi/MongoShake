@@ -44,6 +44,7 @@ const (
 	VarTunnelFile   = "file"
 	VarTunnelTcp    = "tcp"
 	VarTunnelKafka  = "kafka"
+	VarTunnelDirect2ES = "direct2es"
 	VarTunnelMock   = "mock"
 
 	// incr_sync.tunnel.message

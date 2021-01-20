@@ -2,20 +2,20 @@ package coordinator
 
 import (
 	"fmt"
-	"sync"
 	"math"
-
-	"mongoshake/common"
 	"mongoshake/collector/configure"
-	"mongoshake/sharding"
-	"mongoshake/collector/filter"
+	"mongoshake/collector/doc2essyncer"
 	"mongoshake/collector/docsyncer"
+	"mongoshake/collector/filter"
 	"mongoshake/collector/transform"
+	"mongoshake/common"
+	"mongoshake/sharding"
+	"sync"
 
 	"github.com/gugemichael/nimo4go"
+	LOG "github.com/vinllen/log4go"
 	"github.com/vinllen/mgo"
 	"github.com/vinllen/mgo/bson"
-	LOG "github.com/vinllen/log4go"
 )
 
 func fetchChunkMap(isSharding bool) (sharding.ShardingChunkMap, error) {
@@ -100,6 +100,12 @@ func fetchIndexes(sourceList []*utils.MongoSource) (map[utils.NS][]mgo.Index, er
 }
 
 func (coordinator *ReplicationCoordinator) startDocumentReplication() error {
+	switch conf.Options.Tunnel {
+	case utils.VarTunnelDirect2ES:
+		return coordinator.startDocumentReplication2ES()
+	default:
+	}
+
 	// for change stream, we need to fetch current timestamp
 	/*fromConn0, err := utils.NewMongoConn(coordinator.Sources[0].URL, utils.VarMongoConnectModePrimary, true)
 	if err != nil {
@@ -251,7 +257,7 @@ func (coordinator *ReplicationCoordinator) startDocumentReplication() error {
 					smallestNew = val.Newest
 				}
 			}
-			ckptMap = map[string]utils.TimestampNode {
+			ckptMap = map[string]utils.TimestampNode{
 				coordinator.MongoS.ReplicaName: {
 					Newest: smallestNew,
 				},
@@ -274,4 +280,98 @@ func (coordinator *ReplicationCoordinator) SourceIsSharding() bool {
 	} else {
 		return len(conf.Options.MongoUrls) > 1
 	}
+}
+
+func (coordinator *ReplicationCoordinator) startDocumentReplication2ES() error {
+	// for change stream, we need to fetch current timestamp
+	/*fromConn0, err := utils.NewMongoConn(coordinator.Sources[0].URL, utils.VarMongoConnectModePrimary, true)
+	if err != nil {
+		return fmt.Errorf("connect soruce[%v] failed[%v]", coordinator.Sources[0].URL, err)
+	}
+	defer fromConn0.Close()*/
+
+	// TODO: support sharding cluster !!
+
+	var err error
+
+	// get all namespace need to sync
+	nsSet, _, err := doc2essyncer.GetAllNamespace(coordinator.RealSourceFullSync)
+	if err != nil {
+		return err
+	}
+	LOG.Info("all namespace: %v", nsSet)
+
+	// get current newest timestamp
+	ckptMap, err := getTimestampMap(coordinator.MongoD)
+	if err != nil {
+		return err
+	}
+
+	// create target client
+	toUrl := conf.Options.TunnelAddress
+	// Create the Elasticsearch client
+	//toConn, err := elasticsearch.NewClient(elasticsearch.Config{
+	//	Addresses: conf.Options.TunnelAddress,
+	//})
+	//if err != nil {
+	//	LOG.Error("Error creating the client: %s", err)
+	//}
+
+	// create namespace transform
+	trans := transform.NewNamespaceTransform(conf.Options.TransformNamespace)
+
+	////drop target collection
+	//if err := doc2essyncer.StartDropDestIndex(nsSet, toConn, trans); err != nil {
+	//	return err
+	//}
+
+	// global qps limit, all dbsyncer share only 1 Qos
+	qos := utils.StartQoS(0, int64(conf.Options.FullSyncReaderDocumentBatchSize), &utils.FullSentinelOptions.TPS)
+
+	// start sync each db
+	var wg sync.WaitGroup
+	var replError error
+	for i, src := range coordinator.RealSourceFullSync {
+		dbSyncer := doc2essyncer.NewDBSyncer(i, src.URL, src.ReplicaName, toUrl, trans, qos)
+		dbSyncer.Init()
+		LOG.Info("document syncer-%d do replication for url=%v", i, src.URL)
+
+		wg.Add(1)
+		nimo.GoRoutine(func() {
+			defer wg.Done()
+			if err := dbSyncer.Start(); err != nil {
+				LOG.Critical("document replication for url=%v failed. %v",
+					utils.BlockMongoUrlPassword(src.URL, "***"), err)
+				replError = err
+			}
+			dbSyncer.Close()
+		})
+	}
+
+	// start http server.
+	nimo.GoRoutine(func() {
+		// before starting, we must register all interface
+		if err := utils.FullSyncHttpApi.Listen(); err != nil {
+			LOG.Critical("start full sync server with port[%v] failed: %v", conf.Options.FullSyncHTTPListenPort,
+				err)
+		}
+	})
+
+	// wait all db finished
+	wg.Wait()
+	if replError != nil {
+		return replError
+	}
+
+	// update checkpoint after full sync
+	if conf.Options.SyncMode != utils.VarSyncModeFull {
+
+		LOG.Info("try to set checkpoint with map[%v]", ckptMap)
+		if err := doc2essyncer.Checkpoint(ckptMap); err != nil {
+			return err
+		}
+	}
+
+	LOG.Info("document syncer sync end")
+	return nil
 }
