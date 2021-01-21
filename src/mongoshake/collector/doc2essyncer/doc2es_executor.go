@@ -91,6 +91,8 @@ func (colExecutor *CollectionExecutor) Start() error {
 		// Create the Elasticsearch client
 		es, err := elasticsearch.NewClient(elasticsearch.Config{
 			Addresses: conf.Options.TunnelAddress,
+			Username: conf.Options.TunnelUserName,
+			Password: conf.Options.TunnelPassword,
 			// Retry on 429 TooManyRequests statuses
 			RetryOnStatus: []int{502, 503, 504, 429},
 			// Configure the backoff function

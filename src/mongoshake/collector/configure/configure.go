@@ -27,6 +27,8 @@ type Configuration struct {
 	MongoConnectMode            string   `config:"mongo_connect_mode"`
 	Tunnel                      string   `config:"tunnel"`
 	TunnelAddress               []string `config:"tunnel.address"`
+	TunnelUserName              string   `config:"tunnel.username"`
+	TunnelPassword              string   `config:"tunnel.password"`
 	TunnelMessage               string   `config:"tunnel.message"`
 	FilterNamespaceBlack        []string `config:"filter.namespace.black"`
 	FilterNamespaceWhite        []string `config:"filter.namespace.white"`

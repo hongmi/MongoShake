@@ -72,6 +72,42 @@ func TestEsSearch(t *testing.T) {
 	assert.Equal(t, 1, 1, "should be equal")
 }
 
+func TestEsAuth(t *testing.T) {
+	es, _ := elasticsearch.NewClient(elasticsearch.Config{
+		Addresses:             []string{"http://localhost:9200/"},
+		Username:              "elastic",
+		Password:              "elastic",
+		CloudID:               "",
+		APIKey:                "",
+		Header:                nil,
+		CACert:                nil,
+		RetryOnStatus:         nil,
+		DisableRetry:          false,
+		EnableRetryOnTimeout:  false,
+		MaxRetries:            0,
+		DiscoverNodesOnStart:  false,
+		DiscoverNodesInterval: 0,
+		EnableMetrics:         false,
+		EnableDebugLogger:     false,
+		RetryBackoff:          nil,
+		Transport:             nil,
+		Logger:                nil,
+		Selector:              nil,
+		ConnectionPoolFunc:    nil,
+	})
+	log.Println(elasticsearch.Version)
+	log.Println(es.Info())
+	sr := esapi.SearchRequest{
+		Index: []string{"double11"},
+	}
+	res, err := sr.Do(context.Background(), es)
+	log.Println(res)
+	log.Println(err)
+
+	assert.Equal(t, 1, 1, "should be equal")
+}
+
+
 func TestEsDeleteIndex(t *testing.T) {
 	es, _ := elasticsearch.NewDefaultClient()
 
