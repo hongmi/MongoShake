@@ -41,7 +41,7 @@ mongoshake + sync to elasticsearch
 09. 稳定性测试。准备一个集合mongoshakees.func_test_long_time，10w条记录，开启同步，同时启动脚本进行增删查改，运行1小时后，观察效果。
     结果：通过
 10. 稳定性测试。准备一个集合mongoshakees.func_test_es_restart，10w条记录，开启同步，同时启动脚本进行增删查改，过两分钟后，重启elasticsearch集群，观察效果。
-    结果：mongoshakees退出，by design
+    结果：不通过，数据丢失了一部分。
 
 ## 性能测试方案
 1. 测试环境，mongodb, es均运行于docker环境，配置如下

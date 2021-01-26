@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/dustin/go-humanize"
 	"github.com/elastic/go-elasticsearch"
-	"log"
 	"mongoshake/common"
 	"mongoshake/oplog"
 	"strings"
@@ -119,17 +118,17 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 
 	res, err := bw.session.Bulk(strings.NewReader(buf.String()), bw.session.Bulk.WithIndex(indexName))
 	if err != nil {
-		log.Fatalf("Failure indexing %s", err)
+		LOG.Error("Failure indexing %s", err)
 		return err
 	}
 	// If the whole request failed, print error and mark all documents as failed
 	if res.IsError() {
 		numErrors += len(*ops)
 		if err := json.NewDecoder(res.Body).Decode(&raw); err != nil {
-			log.Fatalf("Failure to to parse response body: %s", err)
+			LOG.Error("Failure to to parse response body: %s", err)
 			return err
 		} else {
-			log.Printf("  Error: [%d] %s: %s",
+			LOG.Info("  Error: [%d] %s: %s",
 				res.StatusCode,
 				raw["error"].(map[string]interface{})["type"],
 				raw["error"].(map[string]interface{})["reason"],
@@ -138,7 +137,7 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 		// A successful response might still contain errors for particular documents...
 	} else {
 		if err := json.NewDecoder(res.Body).Decode(&blk); err != nil {
-			log.Fatalf("Failure to to parse response body: %s", err)
+			LOG.Error("Failure to to parse response body: %s", err)
 			return err
 		} else {
 			for _, d := range blk.Items {
@@ -148,7 +147,7 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 					numErrors++
 
 					// ... and print the response status and error information ...
-					log.Printf("  Error: [%d]: %s: %s: %s: %s",
+					LOG.Info("  Error: [%d]: %s: %s: %s: %s",
 						d.Index.Status,
 						d.Index.Error.Type,
 						d.Index.Error.Reason,
@@ -170,7 +169,7 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 	dur := time.Since(start)
 
 	if numErrors > 0 {
-		log.Fatalf(
+		LOG.Error(
 			"Indexed [%s] documents with [%s] errors in %s (%s docs/sec)",
 			humanize.Comma(int64(numIndexed)),
 			humanize.Comma(int64(numErrors)),
@@ -178,7 +177,7 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 			humanize.Comma(int64(1000.0/float64(dur/time.Millisecond)*float64(numIndexed))),
 		)
 	} else {
-		log.Printf(
+		LOG.Info(
 			"Sucessfuly indexed [%s] documents in %s (%s docs/sec)",
 			humanize.Comma(int64(numIndexed)),
 			dur.Truncate(time.Millisecond),
