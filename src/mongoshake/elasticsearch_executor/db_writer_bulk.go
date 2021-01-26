@@ -64,6 +64,21 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 
 	for _, op := range *ops {
 		//LOG.Info("%v", element)
+
+		if op.action == "delete" {
+			var docId string
+			docId = op.query["_id"].(bson.ObjectId).Hex()
+			meta := []byte(fmt.Sprintf(`{ "%s" : { "_id" : "%s" } }%s`, op.action, docId, "\n"))
+			fmt.Printf("[doBulk][meta]%s", meta) // <-- Uncomment to see the payload
+
+			buf.Grow(len(meta))
+			buf.Write(meta)
+			continue
+		}
+
+		//below:
+		//  action for "index" and "update"
+
 		m := utils.BsonToMap(&op.doc)
 		m["id"] = m["_id"]
 		delete(m, "_id")
@@ -77,7 +92,7 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 
 		// Prepare the metadata payload
 		meta := []byte(fmt.Sprintf(`{ "%s" : { "_id" : "%s" } }%s`, op.action, docId, "\n"))
-		// fmt.Printf("%s", meta) // <-- Uncomment to see the payload
+		fmt.Printf("[doBulk][meta]%s", meta) // <-- Uncomment to see the payload
 
 		data, err := utils.MarshalExtJSONWithRegistry(m)
 		//data, err := bson.MarshalJSON(m)
@@ -93,7 +108,7 @@ func (bw *BulkWriter) doBulk(indexName string, ops *[]bulkOperation) error {
 
 		// Append newline to the data payload
 		data = append(data, "\n"...) // <-- Comment out to trigger failure for batch
-		// fmt.Printf("%s", data) // <-- Uncomment to see the payload
+		fmt.Printf("[doBulk][data]%s", data) // <-- Uncomment to see the payload
 
 		// Append payloads to the buffer (ignoring write errors)
 		buf.Grow(len(meta) + len(data))

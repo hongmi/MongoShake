@@ -49,6 +49,9 @@ type BatchGroupExecutor struct {
 	ReplayerId uint32
 	// elasticsearch url
 	ElasticSearchUrl []string
+	// elasticsearch username
+	ElasticsearchUserName string
+	ElasticsearchPassword string
 	// tranform namespace
 	NsTrans *transform.NamespaceTransform
 	// init sync finish timestamp
@@ -66,7 +69,8 @@ func (batchExecutor *BatchGroupExecutor) Start() {
 	}
 	executors := make([]*Executor, parallel)
 	for i := 0; i != len(executors); i++ {
-		executors[i] = NewExecutor(GenerateExecutorId(), batchExecutor, batchExecutor.ElasticSearchUrl)
+		executors[i] = NewExecutor(GenerateExecutorId(), batchExecutor, batchExecutor.ElasticSearchUrl,
+			batchExecutor.ElasticsearchUserName, batchExecutor.ElasticsearchPassword)
 		executors[i].RestAPI()
 		go executors[i].start()
 	}
@@ -174,6 +178,8 @@ type Executor struct {
 	journal *utils.Journal
 	// elasticsearch url
 	ElasticSearchUrl []string
+	ElasticSearchUserName string
+	ElasticSearchPassword string
 
 	batchBlock chan []*OplogRecord
 	finisher   *sync.WaitGroup
@@ -205,12 +211,14 @@ func GenerateExecutorId() int {
 	return int(atomic.AddInt32(&GlobalExecutorId, 1))
 }
 
-func NewExecutor(id int, batchExecutor *BatchGroupExecutor, ElasticSearchUrl []string) *Executor {
+func NewExecutor(id int, batchExecutor *BatchGroupExecutor, ElasticSearchUrl []string, ElasticSearchUserName, ElasticSearchPassword string) *Executor {
 	return &Executor{
 		id:            		id,
 		batchExecutor: 		batchExecutor,
 		journal:       		utils.NewJournal(utils.JournalFileName(fmt.Sprintf("direct.%03d", id))),
 		ElasticSearchUrl:   ElasticSearchUrl,
+		ElasticSearchUserName:   ElasticSearchUserName,
+		ElasticSearchPassword:   ElasticSearchPassword,
 		batchBlock:    		make(chan []*OplogRecord, 1),
 	}
 }

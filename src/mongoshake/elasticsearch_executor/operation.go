@@ -25,8 +25,8 @@ func (exec *Executor) ensureConnection() bool {
 		var err error
 		exec.session, err = elasticsearch.NewClient(elasticsearch.Config{
 			Addresses:             exec.ElasticSearchUrl,
-			Username:              "",
-			Password:              "",
+			Username:              exec.ElasticSearchUserName,
+			Password:              exec.ElasticSearchPassword,
 			CloudID:               "",
 			APIKey:                "",
 			Header:                nil,

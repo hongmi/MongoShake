@@ -10,6 +10,8 @@ import (
 
 type ElasticSearchWriter struct {
 	RemoteAddrs   []string
+	RemoteUserName string
+	RemotePassword string
 	ReplayerId    uint32 // equal to worker-id
 	BatchExecutor *executor.BatchGroupExecutor
 }
@@ -31,6 +33,8 @@ func (writer *ElasticSearchWriter) Prepare() bool {
 	writer.BatchExecutor = &executor.BatchGroupExecutor{
 		ReplayerId: 		writer.ReplayerId,
 		ElasticSearchUrl: 	writer.RemoteAddrs,
+		ElasticsearchUserName: writer.RemoteUserName,
+		ElasticsearchPassword: writer.RemotePassword,
 	}
 	// writer.batchExecutor.RestAPI()
 	writer.BatchExecutor.Start()

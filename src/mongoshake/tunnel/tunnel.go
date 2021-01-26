@@ -155,7 +155,7 @@ type WriterFactory struct {
 
 // create specific Tunnel with tunnel name and pass connection
 // or usefully meta
-func (factory *WriterFactory) Create(address []string, workerId uint32) Writer {
+func (factory *WriterFactory) Create(address []string, workerId uint32, username, password string) Writer {
 	switch factory.Name {
 	case utils.VarTunnelKafka:
 		return &KafkaWriter{RemoteAddr: address[0]}
@@ -170,7 +170,7 @@ func (factory *WriterFactory) Create(address []string, workerId uint32) Writer {
 	case utils.VarTunnelDirect:
 		return &DirectWriter{RemoteAddrs: address, ReplayerId: workerId}
 	case utils.VarTunnelDirect2ES:
-		return &ElasticSearchWriter{RemoteAddrs: address, ReplayerId: workerId}
+		return &ElasticSearchWriter{RemoteAddrs: address, ReplayerId: workerId, RemoteUserName: username, RemotePassword: password}
 	default:
 		LOG.Critical("Specific tunnel not found [%s]", factory.Name)
 		return nil
