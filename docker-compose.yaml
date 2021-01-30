@@ -3,7 +3,7 @@ services:
   mongo:
     image: mongo:4.0-xenial
     hostname: mongo
-    command: ["--replSet", "hehe", "--bind_ip_all"]
+    command: ["--replSet", "hehe", "--bind_ip_all", "--port", "37017"]
     ports:
       - 37017:37017
     networks:
@@ -14,24 +14,24 @@ services:
       MONGO_REPLICA_SET_NAME: hehe
       MONGO_INITDB_DATABASE: initdb
     healthcheck:
-      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --quiet) -eq 1
+      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo -port 37017 -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --quiet) -eq 1
       interval: 10s
       start_period: 30s
         
-  mongoshake:
-    image: hongmin/mongoshake
-    hostname: mongoshake
-    ports:
-      - 9101:9101
-      - 9100:9100
-      - 9102:9102
-      - 30000:30000
-    volumes:
-      - type: bind
-        source: ./conf/collector-impl.conf
-        target: /go/conf/collector.conf
-    networks:
-      - shake
+#  mongoshake:
+#    image: hongmin/mongoshake
+#    hostname: mongoshake
+#    ports:
+#      - 9101:9101
+#      - 9100:9100
+#      - 9102:9102
+#      - 30000:30000
+#    volumes:
+#      - type: bind
+#        source: ./conf/collector-impl.conf
+#        target: /go/conf/collector.conf
+#    networks:
+#      - shake
       
 networks:
   shake:
