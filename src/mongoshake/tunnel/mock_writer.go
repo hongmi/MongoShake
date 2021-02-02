@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"github.com/gugemichael/nimo4go"
+	LOG "github.com/vinllen/log4go"
 )
 
 type MockWriter struct {
@@ -14,8 +15,8 @@ func (tunnel *MockWriter) Name() string {
 func (tunnel *MockWriter) Send(message *WMessage) int64 {
 	nimo.AssertTrue(len(message.RawLogs) > 0,
 		"ack is not required. we should never receive empty messages")
-	//LOG.Info("MockTunnel received message length %d, shard %d, message: %v ",
-	//	len(message.RawLogs), message.Shard, message.ParsedLogs)
+	LOG.Info("MockTunnel received message length %d, shard %d, message: %v ",
+		len(message.RawLogs), message.Shard, message.ParsedLogs)
 
 	return 0
 }
