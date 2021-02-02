@@ -53,8 +53,12 @@ mongoshake + sync to elasticsearch
 2. 测试案例
     对标官方案例https://github.com/alibaba/MongoShake/wiki/MongoShake-Performance-Document#case-3
     mongodb部署：单实例集群
-    测试数据：1000万条记录，每条记录包含5个字段，每条oplog约200字节
+    测试数据：持续产生1000万条记录，单个集合表，每条记录包含5个字段，每条oplog约200字节
     worker并发：4
    
-
-
+3. 测试结果
+   1000w文档，用了45分钟，QPS大约4000
+   同等测试环境，mock tunnel的QPS大约30000
+4. 结论
+    QPS能达到4000，基本能够满足大多数同步场景了。
+    受限于硬件配置，qps较低。如果提高硬件配置，可以遇见qps能够大幅提高。
