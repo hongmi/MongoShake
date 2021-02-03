@@ -1,19 +1,45 @@
-FROM golang:alpine3.12
+FROM golang:1.15.6 as build-env
 
-ENV CGO_ENABLED 0
-ENV GO111MODULE on
+RUN git clone https://github.com/hongmi/MongoShake.git
 
-RUN apk add --no-cache git
-RUN apk add --no-cache zsh
-RUN sh -c "$(wget -O- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+WORKDIR /go/MongoShake
 
-# Get Delve from a GOPATH not from a Go Modules project
-WORKDIR /go/src/
+RUN git checkout sync2es
 
-RUN go get github.com/go-delve/delve/cmd/dlv@v1.4.0
+RUN go get -u github.com/kardianos/govendor
 
-COPY bin/collector.linux /go/bin/
+ENV GOPATH=/go/MongoShake
 
-EXPOSE 8080 30000
+WORKDIR /go/MongoShake/src/vendor/
 
-CMD ["/go/bin/dlv", "--listen=:30000", "--headless=true", "--api-version=2", "exec", "/go/bin/collector.linux", "--", "-conf=/go/conf/collector.conf", "--verbose"]
+RUN govendor sync -v
+
+RUN go get -u golang.org/x/sync/semaphore
+RUN go get -u golang.org/x/text/transform
+RUN go get -u golang.org/x/text/unicode/norm
+RUN go get -u github.com/cenkalti/backoff
+RUN go get -u github.com/dustin/go-humanize
+RUN go get -u github.com/elastic/go-elasticsearch
+
+# change go-elasticsearch branch
+WORKDIR /go/MongoShake/src/github.com/elastic/go-elasticsearch
+# checkout go-elasticsearch to 7.x
+RUN git checkout 7.x
+
+RUN echo $GOPATH
+
+WORKDIR /go/MongoShake
+
+RUN ./build.sh
+
+# create a clean running evironment
+FROM golang:1.15.6
+
+COPY --from=build-env /go/MongoShake/bin /go/MongoShake/bin
+
+# this port define in conf
+#EXPOSE 9100
+#EXPOSE 9101
+#EXPOSE 9102
+
+CMD ["/go/MongoShake/bin/collector.linux", "-conf=/go/MongoShake/conf/collector.conf", "--verbose"]

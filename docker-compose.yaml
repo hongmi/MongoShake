@@ -2,10 +2,11 @@
 services:
   mongo:
     image: mongo:4.0-xenial
+#    container_name: mongo
     hostname: mongo
-    command: ["--replSet", "hehe", "--bind_ip_all", "--port", "37017"]
+    command: ["--replSet", "hehe", "--bind_ip_all", "--port", "28017"]
     ports:
-      - 37017:37017
+      - 28017:28017
     networks:
       - shake
     environment:
@@ -14,24 +15,49 @@ services:
       MONGO_REPLICA_SET_NAME: hehe
       MONGO_INITDB_DATABASE: initdb
     healthcheck:
-      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo -port 37017 -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --quiet) -eq 1
+      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo -port 28017 -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --quiet) -eq 1
       interval: 10s
       start_period: 30s
-        
-#  mongoshake:
-#    image: hongmin/mongoshake
-#    hostname: mongoshake
-#    ports:
-#      - 9101:9101
-#      - 9100:9100
-#      - 9102:9102
-#      - 30000:30000
-#    volumes:
-#      - type: bind
-#        source: ./conf/collector-impl.conf
-#        target: /go/conf/collector.conf
-#    networks:
-#      - shake
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.0
+#    container_name: elasticsearch
+    hostname: elasticsearch
+    ports:
+      - 9800:9200
+    networks:
+      - shake
+    environment:
+      - discovery.type=single-node
+#      - xpack.security.enabled=true
+      - "ES_JAVA_OPTS=-Xms4G -Xmx4G"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.10.0
+#    container_name: kibana
+    hostname: kibana
+    ports:
+      - 5801:5601
+#    environment:
+#      - ELASTICSEARCH_USERNAME=elastic
+#      - ELASTICSEARCH_PASSWORD=elastic
+    networks:
+      - shake
+
+  mongoshake:
+    image: mongoshake
+#    container_name: mongoshake
+    hostname: mongoshake
+    ports:
+      - 9101:9101
+      - 9100:9100
+      - 9102:9102
+    volumes:
+      - type: bind
+        source: ./conf/collector-docker.conf
+        target: /go/MongoShake/conf/collector.conf
+    networks:
+      - shake
       
 networks:
   shake:

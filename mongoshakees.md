@@ -104,6 +104,11 @@ incr_sync.change_stream.watch_full_document = true
 ./collector -conf=conf/collector-perf-test-1.conf  
 ```
 
+## 容器化
+增加了容器化构建脚本和docker-compose示例
+容器化构建脚本：Dockerfile
+需要通过volume挂载配置文件
+
 ## 系统架构理解
 整体架构上并没有进行修改，只是增加了对elasticsearch的全量和增量同步。
 参考官方文档
@@ -114,3 +119,11 @@ incr_sync.change_stream.watch_full_document = true
 2. 由于elasticsearch不支持删除字段，因此针对文档的更新操作，只会新增字段和修改字段。
 3. elasticsearch的数组类型，要求元素必须是同样类型的。因此源mongodb中的数据不能包含元素类型不一致的数组。
 4. elasticsearch目前仅支持7版本。后续会添加对多个版本的支持。
+
+## 实现过程
+1. 全量同步
+2. 增量同步
+3. 数据类型转换
+   由于内部oplog携带的文档数据是github.com/vinllen/mgo/bson，而改代码库没有提供自定义序列化控制方式，我们通过mongodb官方
+   驱动go.mongodb.org/mongo-driver/bson来实现自定义的bson文档序列化，从而构造适合写入elasticsearch的数据结构。
+   参考mongoshake/common/bson_custom_encoder.go

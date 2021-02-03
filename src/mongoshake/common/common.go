@@ -71,6 +71,8 @@ func InitialLogger(logDir, logFile, level string, logFlush bool, verbose bool) e
 		writer := LOG.NewConsoleLogWriter()
 		writer.SetFormat("[%D %T] [%L] %M")
 		LOG.AddFilter("console", logLevel, writer)
+		// for run in docker. we log only to console
+		return nil
 	}
 
 	if len(logDir) == 0 {
