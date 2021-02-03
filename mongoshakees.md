@@ -1,6 +1,12 @@
 #mongoshakees
 mongoshake + sync to elasticsearch
 
+## 背景
+mongoshake简介
+*  [中文架构介绍文档](https://yq.aliyun.com/articles/603329)
+   
+整体架构上并没有进行修改，只是增加了对elasticsearch的全量和增量同步，并且增加容器化构建。
+
 ##功能点列表
 1. 支持全量同步
 2. 支持增量同步，包括增删查改
