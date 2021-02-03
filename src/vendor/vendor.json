@@ -579,6 +579,14 @@
 			"revision": ""
 		},
 		{
+			"path": "golang.org/cenkalti/backoff",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/dustin/go-humanize",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "F+Irnk0yiBmKAsGWR2J2yvBFOZ8=",
 			"path": "gopkg.in/jcmturner/aescts.v1",
 			"revision": "f6abebb3171c4c1b1fea279cb7c7325020a26290",

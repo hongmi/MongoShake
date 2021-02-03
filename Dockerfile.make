@@ -1,8 +1,10 @@
-FROM golang:latest as build-env
+FROM golang:1.15.6 as build-env
 
-RUN git clone https://github.com/alibaba/MongoShake.git
+RUN git clone https://github.com/hongmi/MongoShake.git
 
 WORKDIR /go/MongoShake
+
+RUN git checkout sync2es
 
 RUN go get -u github.com/kardianos/govendor
 
@@ -37,4 +39,4 @@ RUN DEBUG=1 ./build.sh
 
 RUN ls
 
-CMD ["/go/MongoShake/bin/collector.linux", "-conf=/go/MongoShake/conf0/collector.conf", "--verbose"]
+CMD ["/go/MongoShake/bin/collector.linux", "-conf=/go/MongoShake/conf/collector.conf", "--verbose"]
